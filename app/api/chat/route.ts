@@ -212,6 +212,9 @@ export async function POST(req: Request) {
       startTime: workingHours.startTime,
       endTime: workingHours.endTime,
     });
+
+    console.log(workingHours.startTime, workingHours.endTime, toolOutput);
+    
     if (toolOutput === "We are currently offline") {
       return NextResponse.json({ message: toolOutput , agentType: activeAgent,});
     }
