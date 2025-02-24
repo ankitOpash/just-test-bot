@@ -12,7 +12,7 @@ class TimeCheckTool extends StructuredTool {
     const currentHour = new Date().getHours();
     const startHour = parseInt(input.startTime.split(":")[0]);
     const endHour = parseInt(input.endTime.split(":")[0]);
-    if (currentHour >= startHour && currentHour < 23) {
+    if (currentHour >= 9 && currentHour < 23) {
       // Adjusted working hours to 9 AM - 5 PM
       return "We are currently online and ready to assist you.";
     } else {
