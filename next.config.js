@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    reactStrictMode: true, 
+    reactStrictMode: false, 
     images: {
       domains: ["registry.npmmirror.com", "res.cloudinary.com", "example.com"],
     },// Enable React strict mode

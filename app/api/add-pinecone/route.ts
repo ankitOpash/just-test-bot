@@ -152,7 +152,7 @@ export async function POST(req: Request) {
   
       // Removed the loop over `scrapedData` as it was not defined in the provided code
 
-      console.log(documents);
+      //console.log(documents);
       
   
       const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX_NAME!);

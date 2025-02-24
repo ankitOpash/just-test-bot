@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { ChatOpenAI } from "@langchain/openai";
 import { PineconeStore } from "@langchain/pinecone";
@@ -27,8 +27,6 @@ function getTokenCount(text: string): number {
   return tokenizer.encode(text).bpe.length;
 }
 
-
-
 const userStates: { [userId: string]: { step: string; data: any } } = {};
 // Fetch departments and prompts from the API
 async function fetchDepartmentsAndPrompts() {
@@ -46,29 +44,29 @@ async function fetchDepartmentsAndPrompts() {
   }
 }
 
-async function storeChatInDB(
-  userId: string,
-  sender: string,
-  content: string,
-  department: string
-) {
-  try {
-    //console.log("Storing chat in the database...", userId, sender, content, department);
+// async function storeChatInDB(
+//   userId: string,
+//   sender: string,
+//   content: string,
+//   department: string
+// ) {
+//   try {
+//     //console.log("Storing chat in the database...", userId, sender, content, department);
 
-    await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND}/api/public/chat/store-chat`,
-      {
-        userId,
-        sender,
-        content,
-        department,
-      }
-    );
-    console.log("Chat stored successfully");
-  } catch (error: any) {
-    console.error("Error storing chat:", error.response?.data || error.message);
-  }
-}
+//     await axios.post(
+//       `${process.env.NEXT_PUBLIC_BACKEND}/api/public/chat/store-chat`,
+//       {
+//         userId,
+//         sender,
+//         content,
+//         department,
+//       }
+//     );
+//     console.log("Chat stored successfully");
+//   } catch (error: any) {
+//     console.error("Error storing chat:", error.response?.data || error.message);
+//   }
+// }
 
 // Store chat in the database
 
@@ -164,7 +162,7 @@ function truncateToTokenLimit(text: string, tokenLimit: number): string {
 // Main POST function to handle chat requests
 export async function POST(req: Request) {
   try {
-    const { userId, message, history, flowState, attachments,currentHour} =
+    const { userId, message, history, flowState, attachments } =
       await req.json();
 
     if ((!message || typeof message !== "string") && attachments.length === 0) {
@@ -196,8 +194,6 @@ export async function POST(req: Request) {
     //   });
     // }
 
-  
-
     // Fetch departments and prompts
     const departmentsData = await fetchDepartmentsAndPrompts();
 
@@ -208,24 +204,21 @@ export async function POST(req: Request) {
 
     const workingHours = detectedDepartment.workingHours;
     const activeAgent = detectedDepartment?.name;
+    const activeAgentId = detectedDepartment?._id;
     const toolOutput = await timeCheckTool.invoke({
       startTime: workingHours.startTime,
       endTime: workingHours.endTime,
-      currentHour,
     });
-
-    console.log(workingHours.startTime, workingHours.endTime, toolOutput);
-    
     if (toolOutput === "We are currently offline") {
-      return NextResponse.json({ message: toolOutput , agentType: activeAgent,});
+      return NextResponse.json({ message: toolOutput, agentType: activeAgent });
     }
-
 
     if (isHumanChatRequest(message)) {
       userStates[userId] = { step: "name", data: {} };
       return NextResponse.json({
         message: "Please provide your name to transfer the chat.",
         agentType: activeAgent,
+        activeAgentId: activeAgentId,
       });
     }
 
@@ -258,6 +251,7 @@ export async function POST(req: Request) {
           return NextResponse.json({
             message: response3.content,
             agentType: activeAgent,
+            activeAgentId: activeAgentId,
           });
         }
         userStates[userId].data.name = message;
@@ -265,6 +259,7 @@ export async function POST(req: Request) {
         return NextResponse.json({
           message: "Please provide your email to transfer the chat.",
           agentType: activeAgent,
+          activeAgentId: activeAgentId,
         });
       } else if (userStates[userId].step === "email") {
         // Check if the email is valid
@@ -289,6 +284,7 @@ export async function POST(req: Request) {
           return NextResponse.json({
             message: response3.content,
             agentType: activeAgent,
+            activeAgentId: activeAgentId,
           });
         }
 
@@ -298,7 +294,12 @@ export async function POST(req: Request) {
           userStates[userId].data
         );
         delete userStates[userId]; // Clear the user's state
-        return NextResponse.json({ message: toolOutput,agentType: activeAgent, });
+        return NextResponse.json({
+          activeAgentId: activeAgentId,
+          message: toolOutput,
+          agentType: activeAgent,
+          isNewHumanChatRequest: true,
+        });
       }
     }
 
@@ -359,8 +360,6 @@ export async function POST(req: Request) {
       )
       .join("\n");
 
-    
-
     // console.log(promptTemplate);
 
     const promptr = buildDynamicPrompt(
@@ -396,7 +395,7 @@ export async function POST(req: Request) {
     }
     const openai = new ChatOpenAI({
       openAIApiKey: process.env.OPENAI_API_KEY,
-      modelName: "gpt-4o",
+      modelName: "gpt-4o-mini",
       temperature: 0.7,
       timeout: 15000,
       maxRetries: 3,
@@ -409,10 +408,10 @@ export async function POST(req: Request) {
       tool_choice: "auto", // Let the model decide which tool to call
     });
 
-    await storeChatInDB(userId, "user", message, activeAgent);
-    //store Ai response in DB
-    //@ts-ignore
-    await storeChatInDB(userId, "agent", response.content, activeAgent);
+    // await storeChatInDB(userId, "user", message, activeAgent);
+    // //store Ai response in DB
+    // //@ts-ignore
+    // await storeChatInDB(userId, "agent", response.content, activeAgent);
 
     //@ts-ignore
     await memory.chatHistory.addMessage(new HumanMessage(message));
@@ -430,6 +429,7 @@ export async function POST(req: Request) {
       message: response.content,
       history: updatedHistory,
       agentType: activeAgent,
+      activeAgentId: activeAgentId,
     });
   } catch (error: any) {
     console.error("Chat API error:", error.message);

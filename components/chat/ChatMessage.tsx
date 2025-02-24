@@ -13,7 +13,7 @@ interface ChatMessageProps {
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
 
- // console.log(message, "message");
+  // console.log(message, "message");
   //console.log(message.attachments, "attachments"); // Add this line to log attachments
 
   return (
@@ -54,22 +54,40 @@ export function ChatMessage({ message }: ChatMessageProps) {
         >
           {message?.attachments && message?.attachments?.length > 0 && (
             <div className="mt-2 space-y-2">
-              {message.attachments.map((attachment, index) => (
-                <div key={index} className="rounded overflow-hidden">
-                  {attachment?.type === "image" ? (
-                    <img
-                      src={attachment.url}
-                      alt={attachment.name}
-                      className="max-w-full h-auto"
-                    />
-                  ) : (
-                    <div className="bg-white/10 p-2 rounded flex items-center space-x-2">
-                      <span>📄</span>
-                      <span className="truncate">{attachment?.name}</span>
-                    </div>
-                  )}
-                </div>
-              ))}
+              {message.attachments.map((attachment, index) => {
+                // Determine if the attachment is a string (direct URL) or an object
+                const isUrl = typeof attachment === "string";
+                const url = isUrl ? attachment : attachment?.url;
+                const name = isUrl ? "" : attachment?.name;
+                //console.log(attachment, "attachment");
+
+                return (
+                  <div key={index} className="rounded overflow-hidden">
+                    {/* Check if the attachment is an image or ends with common image file extensions */}
+                    {url.endsWith(".png") ||
+                    url.endsWith(".jpg") ||
+                    url.endsWith(".jpeg") ||
+                    url.endsWith(".gif") ? (
+                      <img src={url} alt={name} className="max-w-full h-auto" />
+                    ) : (
+                      <div className="bg-white/10 p-2 rounded flex items-center space-x-2">
+                        <span>📄</span>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="truncate"
+                        >
+                          {name}
+                        </a>
+                        <a href={url} download className="ml-2">
+                          Download
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
           <ReactMarkdown className="prose dark:prose-invert prose-sm">

@@ -6,10 +6,12 @@ import { SendIcon, Paperclip, X } from "lucide-react";
 import { useState, useRef } from "react";
 
 interface ChatInputProps {
-  onSend: (content: string,attachments: any[]) => void;
+  onSend: (content: string, attachments: any[], attachmentsUrls: any[]) => void;
   isTyping: boolean;
   setAttachments: React.Dispatch<React.SetStateAction<any[]>>;
   attachments: any[];
+  attachmentsUrls: any[];
+  setAttachmentsUrls: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 export function ChatInput({
@@ -17,17 +19,21 @@ export function ChatInput({
   isTyping,
   setAttachments,
   attachments,
+  attachmentsUrls,
+  setAttachmentsUrls,
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(false); // Add isLoading state
 
   const handleSubmit = () => {
     if (message.trim() || attachments.length > 0) {
       //@ts-ignore
-      onSend(message, attachments);
+      onSend(message, attachments, attachmentsUrls);
       setMessage("");
       setAttachments([]);
+      setAttachmentsUrls([]);
     }
   };
 
@@ -43,13 +49,61 @@ export function ChatInput({
       setFile(event.target.files[0]);
     }
   };
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
 
-    Array.from(files).forEach((file) => {
+  // const handleFileSelect = async(event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = event.target.files;
+  //   if (!files) return;
+
+  //   Array.from(files).forEach((file) => {
+  //     const reader = new FileReader();
+  //     reader.onload = (e) => {
+  //       const url = e.target?.result as string;
+  //       const type = file.type.startsWith("image/") ? "image" : "pdf";
+
+  //       setAttachments((prev) => [
+  //         ...prev,
+  //         {
+  //           type,
+  //           url,
+  //           name: file.name,
+  //         },
+  //       ]);
+  //     };
+  //     reader.readAsDataURL(file);
+  //   });
+
+  //   // Reset file input
+
+  //   const formData = new FormData();
+  //   formData.append('file', file);
+
+  //   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/public/chat/uploadDocument`, {
+  //     method: 'POST',
+  //     body: formData,
+  //   });
+
+  //   if (!response.ok) {
+  //     console.error('Failed to upload file:', response.statusText);
+  //     return;
+  //   }
+
+  //   event.target.value = "";
+  // };
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setIsLoading(true);
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    // Loop through all selected files
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // Create a new FileReader object
       const reader = new FileReader();
-      reader.onload = (e) => {
+
+      reader.onload = async (e) => {
         const url = e.target?.result as string;
         const type = file.type.startsWith("image/") ? "image" : "pdf";
 
@@ -61,16 +115,57 @@ export function ChatInput({
             name: file.name,
           },
         ]);
+
+        // Upload file to S3 bucket
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/public/chat/uploadDocument`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          console.error("Failed to upload file:", response.statusText);
+          return;
+        }
+
+        const data = await response.json();
+        setAttachmentsUrls((prev) => [...prev, data.url]);
+        //console.log("File uploaded successfully:", data);
       };
+      setIsLoading(false);
       reader.readAsDataURL(file);
-    });
+    }
 
     // Reset file input
     event.target.value = "";
   };
 
-  const removeAttachment = (index: number) => {
+  const removeAttachment = async (index: number, url: string) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/public/chat/deleteDocument`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          filePathToDelete: url,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Failed to delete file:", response.statusText);
+      return;
+    }
+
+    console.log("File deleted successfully");
   };
 
   return (
@@ -91,7 +186,7 @@ export function ChatInput({
                 </div>
               )}
               <button
-                onClick={() => removeAttachment(index)}
+                onClick={() => removeAttachment(index, attachment.url)}
                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="w-3 h-3" />
@@ -113,7 +208,7 @@ export function ChatInput({
           type="file"
           ref={fileInputRef}
           onChange={handleFileSelect}
-          accept="image/*,.pdf"
+          accept="image/*"
           multiple
           className="hidden"
         />
@@ -128,7 +223,7 @@ export function ChatInput({
           onClick={handleSubmit}
           size="icon"
           className="h-11 w-11 shrink-0 rounded-full bg-blue-500 hover:bg-blue-600"
-          disabled={isTyping}
+          disabled={isTyping || isLoading}
         >
           <SendIcon className="h-5 w-5" />
         </Button>

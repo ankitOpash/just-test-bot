@@ -1,21 +1,18 @@
 import { z } from "zod";
 import { StructuredTool } from "langchain/tools";
-import moment from "moment-timezone";
-
 class TimeCheckTool extends StructuredTool {
   schema = z.object({
     startTime: z.string(), // Expecting time in HH:mm:ss format
     endTime: z.string(),
-    currentHour: z.any().optional(),
   });
   name = "checkTime";
   description = "Check if it's currently within working hours";
 
-  async _call(input: { startTime: string; endTime: string,currentHour: any }) {
-    const currentHour = input.currentHour;
+  async _call(input: { startTime: string; endTime: string }) {
+    const currentHour = new Date().getHours();
     const startHour = parseInt(input.startTime.split(":")[0]);
     const endHour = parseInt(input.endTime.split(":")[0]);
-    if (currentHour >= startHour && currentHour < endHour) {
+    if (currentHour >= 0 && currentHour < 24) {
       // Adjusted working hours to 9 AM - 5 PM
       return "We are currently online and ready to assist you.";
     } else {
@@ -25,7 +22,6 @@ class TimeCheckTool extends StructuredTool {
 }
 
 export const timeCheckTool = new TimeCheckTool();
-
 
 class ChatTransferTool extends StructuredTool {
   schema = z.object({
@@ -44,7 +40,7 @@ class ChatTransferTool extends StructuredTool {
 
     // If both name and email are provided, transfer the chat
     if (input.name && input.email) {
-      return `Transferring chat to a human operator. User details: Name - ${input.name}, Email - ${input.email}`;
+      return `Transferring chat to a human operator. User details:\n\n- **Name**: ${input.name}\n- **Email**: ${input.email}`;
     }
     // If only name is provided, ask for the email
     else if (input.name) {
