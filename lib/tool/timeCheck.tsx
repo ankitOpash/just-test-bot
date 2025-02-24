@@ -36,7 +36,7 @@ class TimeCheckTool extends StructuredTool {
 
     return isWithinHours
       ? "We are currently online and ready to assist you."
-      : "We are currently offline.";
+      : "We are currently offline";
   }
 }
 
