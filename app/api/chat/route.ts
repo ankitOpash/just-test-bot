@@ -213,7 +213,7 @@ export async function POST(req: Request) {
       endTime: workingHours.endTime,
     });
     if (toolOutput === "We are currently offline") {
-      return NextResponse.json({ message: toolOutput , agentType: activeAgent,timezone: "Asia/Kolkata"});
+      return NextResponse.json({ message: toolOutput , agentType: activeAgent,});
     }
 
 
