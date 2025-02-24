@@ -6,12 +6,12 @@ class TimeCheckTool extends StructuredTool {
   schema = z.object({
     startTime: z.string(), // Expecting time in HH:mm:ss format
     endTime: z.string(),
-    currentHour: z.number(),
+    currentHour: z.any().optional(),
   });
   name = "checkTime";
   description = "Check if it's currently within working hours";
 
-  async _call(input: { startTime: string; endTime: string,currentHour: number }) {
+  async _call(input: { startTime: string; endTime: string,currentHour: any }) {
     const currentHour = input.currentHour;
     const startHour = parseInt(input.startTime.split(":")[0]);
     const endHour = parseInt(input.endTime.split(":")[0]);
