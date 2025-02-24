@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, createContext, FC, useCallback } from "react";
+import React, { useEffect, useState, createContext, FC } from "react";
 import { Socket, io } from "socket.io-client";
 
 // Define the context type
@@ -23,7 +23,7 @@ const SocketProvider: FC<SocketProviderProps> = ({ children }) => {
     const [socket, setSocket] = useState<Socket | null>(null);
     const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
 
-    const SocketConnection = useCallback(() => {
+    const SocketConnection = () => {
         const newSocket = io(baseURL);
         const userid = localStorage.getItem('userid');
         const chatID = localStorage.getItem('chatID');
@@ -67,18 +67,22 @@ const SocketProvider: FC<SocketProviderProps> = ({ children }) => {
         }
 
         setSocket(newSocket);
-    }, [baseURL, setSocket]);
+    };
+
+    const disconnectSocket = () => {
+        if (socket) {
+            socket.disconnect();
+            setSocket(null);
+        }
+    };
 
     useEffect(() => {
         SocketConnection();
 
         return () => {
-            if (socket) {
-                socket.disconnect();
-                setSocket(null);
-            }
+            disconnectSocket();
         };
-    }, [SocketConnection, socket, setSocket]);
+    }, []);
 
     return (
         <SocketContext.Provider value={{ socket, SocketConnection }}>
