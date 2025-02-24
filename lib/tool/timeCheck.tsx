@@ -17,7 +17,7 @@ class TimeCheckTool extends StructuredTool {
     const currentHour = parseInt(userLocalTime.split(":")[0]);
     const currentMinute = parseInt(userLocalTime.split(":")[1]);
     const currentSecond = parseInt(userLocalTime.split(":")[2]);
-
+   
     const [startHour, startMinute, startSecond] = input.startTime.split(":").map(Number);
     const [endHour, endMinute, endSecond] = input.endTime.split(":").map(Number);
 
@@ -26,7 +26,7 @@ class TimeCheckTool extends StructuredTool {
     const endTotalSeconds = endHour * 3600 + endMinute * 60 + endSecond;
 
     let isWithinHours = false;
-    
+    console.error(userLocalTime,currentHour, currentMinute, currentSecond);
     if (startTotalSeconds < endTotalSeconds) {
       // Regular case: startTime < endTime (e.g., 09:00:00 to 17:00:00)
       isWithinHours = currentTotalSeconds >= startTotalSeconds && currentTotalSeconds < endTotalSeconds;
