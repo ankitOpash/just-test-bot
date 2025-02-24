@@ -164,7 +164,7 @@ function truncateToTokenLimit(text: string, tokenLimit: number): string {
 // Main POST function to handle chat requests
 export async function POST(req: Request) {
   try {
-    const { userId, message, history, flowState, attachments } =
+    const { userId, message, history, flowState, attachments,currentHour} =
       await req.json();
 
     if ((!message || typeof message !== "string") && attachments.length === 0) {
@@ -211,6 +211,7 @@ export async function POST(req: Request) {
     const toolOutput = await timeCheckTool.invoke({
       startTime: workingHours.startTime,
       endTime: workingHours.endTime,
+      currentHour,
     });
 
     console.log(workingHours.startTime, workingHours.endTime, toolOutput);

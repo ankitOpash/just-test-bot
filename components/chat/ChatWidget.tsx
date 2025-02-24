@@ -284,6 +284,7 @@ export function ChatWidget() {
           attachments,
           history: chatState.messages,
           flowState: currentFlowState,
+          currentHour: new Date().getHours(),
         }),
       });
 

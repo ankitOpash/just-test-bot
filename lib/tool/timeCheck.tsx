@@ -4,44 +4,28 @@ import moment from "moment-timezone";
 
 class TimeCheckTool extends StructuredTool {
   schema = z.object({
-    startTime: z.string().regex(/^\d{2}:\d{2}:\d{2}$/, "Invalid time format. Use HH:mm:ss"),
-    endTime: z.string().regex(/^\d{2}:\d{2}:\d{2}$/, "Invalid time format. Use HH:mm:ss"),
+    startTime: z.string(), // Expecting time in HH:mm:ss format
+    endTime: z.string(),
+    currentHour: z.number(),
   });
-
   name = "checkTime";
   description = "Check if it's currently within working hours";
 
-  async _call(input: { startTime: string; endTime: string }) {
-
-    const userLocalTime = new Date().toLocaleTimeString("en-GB", { hour12: false }); // Gets HH:mm:ss format
-    const currentHour = parseInt(userLocalTime.split(":")[0]);
-    const currentMinute = parseInt(userLocalTime.split(":")[1]);
-    const currentSecond = parseInt(userLocalTime.split(":")[2]);
-   
-    const [startHour, startMinute, startSecond] = input.startTime.split(":").map(Number);
-    const [endHour, endMinute, endSecond] = input.endTime.split(":").map(Number);
-
-    const currentTotalSeconds = currentHour * 3600 + currentMinute * 60 + currentSecond;
-    const startTotalSeconds = startHour * 3600 + startMinute * 60 + startSecond;
-    const endTotalSeconds = endHour * 3600 + endMinute * 60 + endSecond;
-
-    let isWithinHours = false;
-    console.error(userLocalTime,currentHour, currentMinute, currentSecond);
-    if (startTotalSeconds < endTotalSeconds) {
-      // Regular case: startTime < endTime (e.g., 09:00:00 to 17:00:00)
-      isWithinHours = currentTotalSeconds >= startTotalSeconds && currentTotalSeconds < endTotalSeconds;
+  async _call(input: { startTime: string; endTime: string,currentHour: number }) {
+    const currentHour = input.currentHour;
+    const startHour = parseInt(input.startTime.split(":")[0]);
+    const endHour = parseInt(input.endTime.split(":")[0]);
+    if (currentHour >= startHour && currentHour < endHour) {
+      // Adjusted working hours to 9 AM - 5 PM
+      return "We are currently online and ready to assist you.";
     } else {
-      // Overnight case: e.g., 23:00:00 to 05:00:00
-      isWithinHours = currentTotalSeconds >= startTotalSeconds || currentTotalSeconds < endTotalSeconds;
+      return "We are currently offline";
     }
-
-    return isWithinHours
-      ? "We are currently online and ready to assist you."
-      : "We are currently offline";
   }
 }
 
 export const timeCheckTool = new TimeCheckTool();
+
 
 class ChatTransferTool extends StructuredTool {
   schema = z.object({
