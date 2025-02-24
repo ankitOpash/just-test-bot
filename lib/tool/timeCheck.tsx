@@ -12,10 +12,11 @@ class TimeCheckTool extends StructuredTool {
   description = "Check if it's currently within working hours";
 
   async _call(input: { startTime: string; endTime: string }) {
-    const currentTimeInKolkata = moment().tz("Asia/Kolkata").format("HH:mm:ss");
-    const currentHour = parseInt(currentTimeInKolkata.split(":")[0]);
-    const currentMinute = parseInt(currentTimeInKolkata.split(":")[1]);
-    const currentSecond = parseInt(currentTimeInKolkata.split(":")[2]);
+
+    const userLocalTime = new Date().toLocaleTimeString("en-GB", { hour12: false }); // Gets HH:mm:ss format
+    const currentHour = parseInt(userLocalTime.split(":")[0]);
+    const currentMinute = parseInt(userLocalTime.split(":")[1]);
+    const currentSecond = parseInt(userLocalTime.split(":")[2]);
 
     const [startHour, startMinute, startSecond] = input.startTime.split(":").map(Number);
     const [endHour, endMinute, endSecond] = input.endTime.split(":").map(Number);
