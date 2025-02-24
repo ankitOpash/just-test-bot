@@ -1,0 +1,11 @@
+{
+    "routes": [
+      {
+        "src": "/tiktoken_bg.wasm",
+        "headers": {
+          "Cache-Control": "public, max-age=31536000, immutable"
+        },
+        "dest": "/tiktoken_bg.wasm"
+      }
+    ]
+}
