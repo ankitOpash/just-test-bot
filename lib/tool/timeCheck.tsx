@@ -1,19 +1,44 @@
 import { z } from "zod";
 import { StructuredTool } from "langchain/tools";
+
 class TimeCheckTool extends StructuredTool {
   schema = z.object({
-    startTime: z.string(), // Expecting time in HH:mm:ss format
-    endTime: z.string(),
+    startTime: z.string(), // Expecting time in HH:mm:ss format (e.g., "09:00:00")
+    endTime: z.string(),   // Expecting time in HH:mm:ss format (e.g., "17:00:00")
+    timezone: z.string().optional(), // Optional: IANA time zone name (e.g., "Asia/Kolkata")
   });
+
   name = "checkTime";
   description = "Check if it's currently within working hours";
 
-  async _call(input: { startTime: string; endTime: string }) {
-    const currentHour = new Date().getHours();
-    const startHour = parseInt(input.startTime.split(":")[0]);
-    const endHour = parseInt(input.endTime.split(":")[0]);
-    if (currentHour >= startHour && currentHour < endHour) {
-      // Adjusted working hours to 9 AM - 5 PM
+  async _call(input: { startTime: string; endTime: string; timezone?: string }) {
+    const now = new Date();
+
+    // 1. Get the correct time based on timezone
+    let currentHour;
+    if (input.timezone) {
+       try {
+        currentHour = new Date(now.toLocaleString("en-US", { timeZone: input.timezone })).getHours();
+       } catch (error) {
+         console.error("Invalid timezone:", input.timezone, error);
+         return "Error: Invalid timezone provided."; // Handle invalid timezones
+       }
+
+    } else {
+      // Default fallback if no timezone is provided (less accurate)
+      console.warn("No timezone provided. Using server's time (UTC).");
+      currentHour = now.getHours();
+    }
+
+
+    const [startHour, startMinute] = input.startTime.split(":").map(Number);
+    const [endHour, endMinute] = input.endTime.split(":").map(Number);
+
+    const nowMinutes = now.getMinutes() + currentHour * 60; // Current time in minutes
+    const startMinutes = startMinute + startHour * 60; // Start time in minutes
+    const endMinutes = endMinute + endHour * 60; // End time in minutes
+
+    if (nowMinutes >= startMinutes && nowMinutes < endMinutes) {
       return "We are currently online and ready to assist you.";
     } else {
       return "We are currently offline";
