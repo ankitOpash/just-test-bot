@@ -45,6 +45,13 @@ export function ChatWidget() {
     isOpen: false,
   };
 
+  const currentHour = new Date().getHours();
+  const startHour = parseInt(input.startTime.split(":")[0]);
+  const endHour = parseInt(input.endTime.split(":")[0]);
+
+  console.log("currentHour", currentHour,startHour,endHour);
+  
+
   useEffect(() => {
     // Emit "get-messages" event with chatId from local storage
     const chatId = localStorage.getItem("chatID");
