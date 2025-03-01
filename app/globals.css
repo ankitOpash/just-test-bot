@@ -80,3 +80,27 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Add custom styles for chat messages */
+.prose {
+  max-width: none !important;
+}
+
+.prose p {
+  margin: 0.5em 0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.prose pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-x: auto;
+}
+
+.prose code {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}

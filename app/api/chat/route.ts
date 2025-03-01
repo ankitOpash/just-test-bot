@@ -212,8 +212,8 @@ export async function POST(req: Request) {
     if (toolOutput === "We are currently offline") {
       return NextResponse.json({ message: toolOutput, agentType: activeAgent });
     }
-
-    if (isHumanChatRequest(message)) {
+    const isHumanRequest = await isHumanChatRequest(message)
+    if (isHumanRequest) {
       userStates[userId] = { step: "name", data: {} };
       return NextResponse.json({
         message: "Please provide your name to transfer the chat.",

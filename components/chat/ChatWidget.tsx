@@ -22,22 +22,9 @@ const INITIAL_MESSAGE: Message = {
 };
 
 export function ChatWidget() {
-  const { socket } = useContext(SocketContext);
+  const { socket,SocketConnection } = useContext(SocketContext);
 
-  // useEffect(() => {
-  //   const fetchChatHistory = async () => {
-  //     try {
-  //       const res = await fetch(`/api/chat?userid=${userid}`);
-  //       if (res.ok) {
-  //         const data = await res.json();
-  //         setMessages(data.messages);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching chat history:", error);
-  //     }
-  //   };
-  //   fetchChatHistory();
-  // }, [userid]);
+
 
   const initialChatState: ChatState = {
     messages: [INITIAL_MESSAGE], // Default to initial message
@@ -56,7 +43,12 @@ export function ChatWidget() {
     hour12: false,
   });
   // console.log("System Time:", formattedTime);
-
+  const defaultChatState: ChatState = {
+    messages: [INITIAL_MESSAGE], // Default to initial message
+    isTyping: false,
+    isOpen: false,
+  };
+  const [chatState, setChatState] = useState<ChatState>(defaultChatState);
   useEffect(() => {
     // Emit "get-messages" event with chatId from local storage
     const chatId = localStorage.getItem("chatID");
@@ -78,20 +70,29 @@ export function ChatWidget() {
             isTyping: false,
             isOpen: false,
           });
+
+          socket.emit("getchatdetails", { chatId }, (msg:any) => {
+            console.log("Received message:", msg?.chat?.isHuman);
+            if(msg?.chat?.isHuman !== undefined){
+              // console.log("Received isHuman value:", msg.isHuman);
+              setIsHuman(msg?.chat?.isHuman);
+            }
+          });
+
         } else {
           // If no messages, set the initial message
-          socket.emit("save-message", {
-            id: uuidv4(),
-            content: "Hi! 👋 How can I help you today?",
-            role: "assistant",
-            receiver: localStorage.getItem("chatID") || undefined,
-            receiverType: "user",
-            sendType: "assistant",
-            chatId: localStorage.getItem("chatID"),
-            timestamp: new Date(),
-            agentType: "General Insurance",
-            attachments: [],
-          });
+          // socket.emit("save-message", {
+          //   id: uuidv4(),
+          //   content: "Hi! 👋 How can I help you today?",
+          //   role: "assistant",
+          //   receiver: localStorage.getItem("chatID") || undefined,
+          //   receiverType: "user",
+          //   sendType: "assistant",
+          //   chatId: localStorage.getItem("chatID"),
+          //   timestamp: new Date(),
+          //   agentType: "General Insurance",
+          //   attachments: [],
+          // });
           setChatState({
             messages: [INITIAL_MESSAGE],
             isTyping: false,
@@ -103,109 +104,50 @@ export function ChatWidget() {
   }, [socket]);
 
   useEffect(() => {
-    if (socket) {
-      socket.on("message", (message) => {
-        //console.log(message, "message on");
-        if (message?.isHuman !== undefined) {
-          setIsHuman(message?.isHuman);
-        }
+    console.log("Updated isHuman state:", isHuman);
+  }, [isHuman]);
 
-        if (message?.latestMessage?.sendType === "admin") {
-          setChatState((prevState) => ({
-            ...prevState,
-            messages: [
-              ...prevState.messages,
-              {
-                id: message?.latestMessage?.id || uuidv4(),
-                content: message?.latestMessage?.content,
-                role: message?.latestMessage?.sendType,
-                sendType: message?.latestMessage?.sendType,
-                timestamp: new Date(message.timestamp || Date.now()),
-                agentType: message.agentType,
-                attachments: message?.latestMessage?.attachments,
-              },
-            ],
-          }));
-        }
-      });
-
-      // Clean up the effect
-      return () => {
-        socket.off("message");
-      };
+  useEffect(() => {
+    // If the socket doesn't exist, initiate the connection
+    if (!socket) {
+      SocketConnection();
+      return;
     }
-  }, [socket]);
+  
+    const handleMessage = (message: any) => {
+     // console.log(message, "message on");
+      if (message?.isHuman !== undefined) {
+        setIsHuman(message.isHuman);
+      }
+  
+      if (message?.latestMessage?.sendType === "admin") {
+        setChatState((prevState) => ({
+          ...prevState,
+          messages: [
+            ...prevState.messages,
+            {
+              id: message?.latestMessage?.id || uuidv4(),
+              content: message?.latestMessage?.content,
+              role: message?.latestMessage?.sendType,
+              sendType: message?.latestMessage?.sendType,
+              timestamp: new Date(message.timestamp || Date.now()),
+              agentType: message.agentType,
+              attachments: message?.latestMessage?.attachments,
+            },
+          ],
+        }));
+      }
+    };
+  
+    socket.on("message", handleMessage);
+  
+    return () => {
+      socket.off("message", handleMessage);
+    };
+  }, [socket, SocketConnection,chatState.messages]);
 
- 
-  // const initialChatState = useMemo(() => {
-  //   if (typeof window !== "undefined") {
-  //     const savedChat = localStorage.getItem("chatHistory");
-  //     if (savedChat) {
-  //       try {
-  //         const parsed = JSON.parse(savedChat);
-  //         if (parsed?.messages) {
-  //           return {
-  //             messages: parsed.messages.map((msg: any) => ({
-  //               id: msg.id || uuidv4(),
-  //               content: msg.content,
-  //               role: msg.role,
-  //               sendType: msg.sendType,
-  //               timestamp: new Date(msg.timestamp || Date.now()),
-  //               agentType: msg.agentType,
-  //             })),
-  //             isTyping: false,
-  //             isOpen: false,
-  //           };
-  //         }
-  //       } catch (error) {
-  //         console.error("Failed to parse chat history:", error);
-  //       }
-  //     }
-  //   }
-  //   return {
-  //     messages: [INITIAL_MESSAGE],
-  //     isTyping: false,
-  //     isOpen: false,
-  //   };
-  // }, []);
 
-  const defaultChatState: ChatState = {
-    messages: [INITIAL_MESSAGE], // Default to initial message
-    isTyping: false,
-    isOpen: false,
-  };
-  const [chatState, setChatState] = useState<ChatState>(defaultChatState);
 
-  // useEffect(() => {
-  //   const chatId = localStorage.getItem("chatID");
-  //   if (socket && chatId) {
-  //     const handleMessages = (messages: any) => {
-
-  //       if (Array.isArray(messages)) {
-  //         setChatState((prevState) => ({
-  //           ...prevState,
-  //           messages: [
-  //             ...prevState.messages,
-  //             ...messages.map((msg: any) => ({
-  //               id: msg._id || uuidv4(),
-  //               content: msg.content,
-  //               role: msg.sendType,
-  //               sendType: msg.sendType,
-  //               timestamp: new Date(msg.timestamp || Date.now()),
-  //             })),
-  //           ],
-  //         }));
-  //       }
-  //     };
-
-  //     socket.on("get-messages", handleMessages);
-  //     socket.emit("get-messages", { chatId });
-
-  //     return () => {
-  //       socket.off("get-messages", handleMessages);
-  //     };
-  //   }
-  // }, [socket]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [attachmentsUrls, setAttachmentsUrls] = useState<any[]>([]);
@@ -213,18 +155,6 @@ export function ChatWidget() {
     let userid = localStorage.getItem("userid");
   }, []);
 
-  // useEffect(() => {
-  //   localStorage?.setItem(
-  //     "chatHistory",
-  //     JSON.stringify({
-  //       messages: chatState.messages.map((msg) => ({
-  //         ...msg,
-  //         timestamp: msg.timestamp.toISOString(),
-  //         flowState: msg.flowState,
-  //       })),
-  //     })
-  //   );
-  // }, [chatState.messages]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -239,6 +169,12 @@ export function ChatWidget() {
       return;
 
     const userMessageId = uuidv4();
+
+    if (!socket) {
+      console.log("Socket is null, initiating connection...");
+      SocketConnection();
+      return;
+    }
 
     setChatState((state) => ({
       ...state,
@@ -305,7 +241,7 @@ export function ChatWidget() {
 
         const data = await response.json();
 
-        //console.log(data);
+        console.log(data);
 
         if (data.hasOwnProperty('isNewHumanChatRequest') && data.isNewHumanChatRequest) {
           // Check if activeAgentId and chatID are not undefined
@@ -373,6 +309,12 @@ export function ChatWidget() {
       } else {
         console.error("Socket is null");
       }
+      setChatState((state) => ({
+         ...state,
+        // messages: state.messages.filter((msg) => msg.id !== userMessageId),
+        isTyping: false,
+      }));
+
     } catch (error) {
       console.error("Chat error:", error);
       setChatState((state) => ({

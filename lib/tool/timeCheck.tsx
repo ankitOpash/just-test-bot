@@ -9,11 +9,15 @@ class TimeCheckTool extends StructuredTool {
   description = "Check if it's currently within working hours";
 
   async _call(input: { startTime: string; endTime: string }) {
-    const currentHour = new Date().getHours();
+    const currentHour = Number(
+      new Date()
+        .toLocaleString("en-US", { timeZone: "Asia/Kolkata", hour: "2-digit", hour12: false })
+    );
+
     const startHour = parseInt(input.startTime.split(":")[0]);
     const endHour = parseInt(input.endTime.split(":")[0]);
-    if (currentHour >= 0 && currentHour < 24) {
-      // Adjusted working hours to 9 AM - 5 PM
+  
+    if (currentHour >= startHour && currentHour < endHour) {
       return "We are currently online and ready to assist you.";
     } else {
       return "We are currently offline";

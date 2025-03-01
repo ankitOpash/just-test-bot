@@ -90,7 +90,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
               })}
             </div>
           )}
-          <ReactMarkdown className="prose dark:prose-invert prose-sm">
+
+          <ReactMarkdown className="prose dark:prose-invert prose-sm break-words whitespace-pre-wrap">
             {message.content}
           </ReactMarkdown>
         </div>
