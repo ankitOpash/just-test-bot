@@ -2,7 +2,7 @@
 
 import { Message } from "./types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { cn, getFileName } from "@/lib/utils";
 import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 
@@ -68,20 +68,22 @@ export function ChatMessage({ message, handleOptionSelect }: ChatMessageProps) {
                       //@ts-ignore
                       <img src={url} alt={name} className="max-w-full h-auto" />
                     ) : (
-                      <div className="bg-white/10 p-2 rounded flex items-center space-x-2">
+                      <a
+                        className="bg-white/10 p-2 rounded flex items-center gap-1 mt-1"
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download
+                      >
                         <span>📄</span>
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="truncate"
-                        >
-                          {name}
-                        </a>
-                        <a href={url} download className="ml-2">
+                        <span className="truncate">{name}</span>
+                        <span className="flex flex-col">
                           Download
-                        </a>
-                      </div>
+                          <span className="text-xs truncate max-w-32">
+                            {getFileName(url)}
+                          </span>
+                        </span>
+                      </a>
                     )}
                   </div>
                 );

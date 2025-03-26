@@ -1,11 +1,9 @@
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-
-
 
 // Open a connection to the IndexedDB database
 function openDatabase() {
@@ -48,3 +46,6 @@ async function getChatHistory(sessionId: string): Promise<string[]> {
     request.onerror = (event) => reject(event);
   });
 }
+
+export const getFileName = (url: string) =>
+  url?.split("/")?.pop?.()?.split("-")?.pop?.() || "";

@@ -134,7 +134,7 @@ export function ChatInput({
         }
 
         const data = await response.json();
-        console.log(data,"dataiii")
+        console.log(data, "dataiii");
         setAttachmentsUrls((prev) => [...prev, data.url]);
         //console.log("File uploaded successfully:", data);
       };
@@ -148,6 +148,7 @@ export function ChatInput({
 
   const removeAttachment = async (index: number, url: string) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
+    setAttachmentsUrls((prev) => prev.filter((_, i) => i !== index));
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/public/chat/deleteDocument`,
       {
@@ -209,7 +210,6 @@ export function ChatInput({
           type="file"
           ref={fileInputRef}
           onChange={handleFileSelect}
-        
           multiple
           className="hidden"
         />
