@@ -266,6 +266,23 @@ export function ChatWidget() {
     }
   };
 
+  const isChatOpen = chatState.isOpen;
+  useEffect(() => {
+    if (isChatOpen) {
+      requestAnimationFrame(() => {
+        const chatContainer = document.querySelector(
+          "div[data-radix-scroll-area-viewport]"
+        );
+        if (chatContainer) {
+          chatContainer.scrollTo({
+            top: chatContainer.scrollHeight,
+            behavior: "smooth",
+          });
+        }
+      });
+    }
+  }, [isChatOpen]);
+
   return (
     <>
       <AnimatePresence>
