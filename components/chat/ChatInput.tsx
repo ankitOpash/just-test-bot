@@ -134,6 +134,7 @@ export function ChatInput({
         }
 
         const data = await response.json();
+        console.log(data,"dataiii")
         setAttachmentsUrls((prev) => [...prev, data.url]);
         //console.log("File uploaded successfully:", data);
       };

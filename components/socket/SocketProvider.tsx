@@ -24,6 +24,8 @@ const SocketProvider: FC<SocketProviderProps> = ({ children }) => {
   const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
 
   const SocketConnection = async () => {
+    if (socket) return; // Prevent multiple connections
+
     const newSocket = io(baseURL);
     //console.log("Socket:", newSocket);
 
@@ -105,3 +107,6 @@ const SocketProvider: FC<SocketProviderProps> = ({ children }) => {
 };
 
 export default SocketProvider;
+
+
+/// when get user first msg that time coonet socket coonection
