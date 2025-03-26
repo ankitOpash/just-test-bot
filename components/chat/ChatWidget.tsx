@@ -249,6 +249,8 @@ export function ChatWidget() {
         {
           id: userMessageId,
           content: option.label,
+          isInteractiveAnswer: true,
+          // selectedOpId: option.value,
           role: "user",
           sendType: "user",
           receiverType: "assistant",
