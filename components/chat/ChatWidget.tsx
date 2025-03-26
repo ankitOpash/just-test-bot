@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useMemo, useContext } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { Message, ChatState } from "./types";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
@@ -11,7 +11,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { v4 as uuidv4 } from "uuid";
 import { SocketContext } from "../socket/SocketProvider";
-import axios from "axios";
 
 const INITIAL_MESSAGE: Message = {
   id: "initial",
@@ -28,88 +27,14 @@ const INITIAL_MESSAGE: Message = {
 export function ChatWidget() {
   const { socket, SocketConnection } = useContext(SocketContext);
 
-  const initialChatState: ChatState = {
-    messages: [INITIAL_MESSAGE], // Default to initial message
-    isTyping: false,
-    isOpen: false,
-  };
-
-  const systemTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
   const [isHuman, setIsHuman] = useState(false);
-  // console.log("System Timezone:", systemTimeZone);
 
-  // Get system time in the system's timezone
-  const systemTime = new Date();
-  const formattedTime = systemTime.toLocaleTimeString("en-US", {
-    hour12: false,
-  });
-  // console.log("System Time:", formattedTime);
   const defaultChatState: ChatState = {
     messages: [INITIAL_MESSAGE], // Default to initial message
     isTyping: false,
     isOpen: false,
   };
   const [chatState, setChatState] = useState<ChatState>(defaultChatState);
-  useEffect(() => {
-    // Emit "get-messages" event with chatId from local storage
-    const chatId = localStorage.getItem("chatID");
-    if (socket && chatId) {
-      socket.emit("get-messages", { chatId }, (messages: any) => {
-        console.log("message ayyy", messages);
-
-        if (messages?.messages && messages.messages.length > 0) {
-          setChatState({
-            messages: messages?.messages
-              .map((msg: any) => ({
-                id: msg.id || uuidv4(),
-                content: msg.content,
-                role: msg.sendType,
-                sendType: msg.sendType,
-                timestamp: new Date(msg.timestamp || Date.now()),
-                agentType: msg.agentType,
-                messageOptions: msg?.messageOptions,
-                attachments: msg.attachments,
-              }))
-              .reverse(), // Reverse the order of messages here,
-            isTyping: false,
-            isOpen: false,
-          });
-
-          socket.emit("getchatdetails", { chatId }, (msg: any) => {
-            console.log("Received message:", msg?.chat?.isHuman);
-            if (msg?.chat?.isHuman !== undefined) {
-              // console.log("Received isHuman value:", msg.isHuman);
-              setIsHuman(msg?.chat?.isHuman);
-            }
-          });
-        } else {
-          // If no messages, set the initial message
-          // socket.emit("save-message", {
-          //   id: uuidv4(),
-          //   content: "Hi! 👋 How can I help you today?",
-          //   role: "assistant",
-          //   receiver: localStorage.getItem("chatID") || undefined,
-          //   receiverType: "user",
-          //   sendType: "assistant",
-          //   chatId: localStorage.getItem("chatID"),
-          //   timestamp: new Date(),
-          //   agentType: "General Insurance",
-          //   attachments: [],
-          // });
-          setChatState({
-            messages: [INITIAL_MESSAGE],
-            isTyping: false,
-            isOpen: false,
-          });
-        }
-      });
-    }
-  }, [socket]);
-
-  useEffect(() => {
-    console.log("Updated isHuman state:", isHuman);
-  }, [isHuman]);
 
   useEffect(() => {
     // If the socket doesn't exist, initiate the connection
@@ -117,9 +42,6 @@ export function ChatWidget() {
       SocketConnection();
       return;
     }
-    //new thing
-
-    ///
     const handleMessage = (message: any) => {
       if (message?.isHuman !== undefined) {
         setIsHuman(message.isHuman);
@@ -148,6 +70,45 @@ export function ChatWidget() {
 
     socket.on("message", handleMessage);
 
+    // Emit "get-messages" event with chatId from local storage
+    const chatId = localStorage.getItem("chatID");
+    if (chatId) {
+      socket.emit("get-messages", { chatId }, (messages: any) => {
+        if (messages?.messages && messages.messages.length > 0) {
+          setChatState({
+            messages: messages?.messages
+              .map((msg: any) => ({
+                id: msg.id || uuidv4(),
+                content: msg.content,
+                role: msg.sendType,
+                sendType: msg.sendType,
+                timestamp: new Date(msg.timestamp || Date.now()),
+                agentType: msg.agentType,
+                messageOptions: msg?.messageOptions,
+                attachments: msg.attachments,
+              }))
+              .reverse(), // Reverse the order of messages here,
+            isTyping: false,
+            isOpen: false,
+          });
+
+          socket.emit("getchatdetails", { chatId }, (msg: any) => {
+            console.log("Received message:", msg?.chat?.isHuman);
+            if (msg?.chat?.isHuman !== undefined) {
+              // console.log("Received isHuman value:", msg.isHuman);
+              setIsHuman(msg?.chat?.isHuman);
+            }
+          });
+        } else {
+          setChatState({
+            messages: [INITIAL_MESSAGE],
+            isTyping: false,
+            isOpen: false,
+          });
+        }
+      });
+    }
+
     return () => {
       socket.off("message", handleMessage);
     };
@@ -156,9 +117,6 @@ export function ChatWidget() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [attachmentsUrls, setAttachmentsUrls] = useState<any[]>([]);
-  useEffect(() => {
-    let userid = localStorage.getItem("userid");
-  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -229,88 +187,6 @@ export function ChatWidget() {
       )?.flowState;
 
       if (!isHuman) {
-        // const response = await fetch("/api/chat", {
-        //   method: "POST",
-        //   headers: { "Content-Type": "application/json" },
-        //   body: JSON.stringify({
-        //     userid: localStorage.getItem("userid"),
-        //     message: content,
-        //     attachments,
-        //     history: chatState.messages,
-        //     flowState: currentFlowState,
-        //     systemTime: formattedTime,
-        //   }),
-        // });
-        // if (!response.ok) throw new Error("Failed to get response");
-        // const data = await response.json();
-        // console.log(data);
-        // if (
-        //   data.hasOwnProperty("isNewHumanChatRequest") &&
-        //   data.isNewHumanChatRequest
-        // ) {
-        //   // Check if activeAgentId and chatID are not undefined
-        //   const activeAgentId = data.activeAgentId;
-        //   const chatId = localStorage.getItem("chatID");
-        //   if (activeAgentId && chatId && socket) {
-        //     // Emit 'transfer-chat' event with activeAgentId and chatId
-        //     socket.emit(
-        //       "transfer-chat",
-        //       { department: activeAgentId, chatId },
-        //       (response: any) => {
-        //         if (response.success === true) {
-        //           setIsHuman(true);
-        //         } else {
-        //           console.log("Server response:", response);
-        //         }
-        //       }
-        //     );
-        //   } else {
-        //     console.error("activeAgentId or chatId is undefined");
-        //   }
-        // }
-        // const assistantMessage: Message = {
-        //   id: uuidv4(),
-        //   content: data.message,
-        //   role: "assistant",
-        //   sendType: "assistant",
-        //   receiver: localStorage.getItem("chatID") || undefined,
-        //   receiverType: "user",
-        //   timestamp: new Date(),
-        //   agentType: data.agentType,
-        // };
-        // if (socket) {
-        //   socket.emit("save-message", {
-        //     id: uuidv4(),
-        //     content: data.message,
-        //     role: "assistant",
-        //     receiver: localStorage.getItem("chatID") || undefined,
-        //     receiverType: "user",
-        //     sendType: "assistant",
-        //     chatId: localStorage.getItem("chatID"),
-        //     timestamp: new Date(),
-        //     agentType: data.agentType,
-        //   });
-        //   setChatState((state) => ({
-        //     ...state,
-        //     messages: [
-        //       ...state.messages.filter((msg) => msg.id !== userMessageId),
-        //       {
-        //         id: userMessageId,
-        //         content,
-        //         role: "user",
-        //         sendType: "user",
-        //         receiverType: "assistant",
-        //         chatId: localStorage.getItem("chatID"),
-        //         sender: localStorage.getItem("userid"),
-        //         attachments:
-        //           attachmentsUrls.length > 0 ? [...attachmentsUrls] : [],
-        //         timestamp: new Date(),
-        //       },
-        //       assistantMessage,
-        //     ],
-        //     isTyping: false,
-        //   }));
-        // }
       } else {
         console.error("Socket is null");
       }
@@ -388,115 +264,6 @@ export function ChatWidget() {
     } else {
       console.error("Socket is null");
     }
-    // Add user message with the selected option
-    // const userMessage: Message = {
-    //   id: Date.now().toString(),
-    //   content: option.label,
-    //   sender: "user",
-    //   role: "user",
-    //   timestamp: new Date(),
-    // };
-
-    // setChatState((prevState) => ({
-    //   ...prevState,
-    //   messages: [...prevState.messages, userMessage],
-    // }));
-
-    // // Simulate bot response based on the selected option
-    // setTimeout(() => {
-    //   let botResponse: Message;
-
-    //   if (option.label === "Get Started") {
-    //     botResponse = {
-    //       role: "assistant",
-    //       id: (Date.now() + 1).toString(),
-    //       content: "Great! Let's get you started. What would you like to do?",
-    //       sender: "bot",
-    //       timestamp: new Date(),
-    //       messageOptions: [
-    //         { label: "Yes", value: "yes" },
-    //         { label: "No, thanks", value: "no_thanks" },
-    //       ],
-    //       isInteractive: true,
-    //     };
-    //   } else if (option.label === "Learn More") {
-    //     botResponse = {
-    //       role: "assistant",
-    //       id: (Date.now() + 1).toString(),
-    //       content:
-    //         "I'd be happy to tell you more about our services. What are you interested in?",
-    //       sender: "bot",
-    //       timestamp: new Date(),
-    //       messageOptions: [
-    //         { label: "Yes", value: "yes" },
-    //         { label: "No, thanks", value: "no_thanks" },
-    //       ],
-    //       isInteractive: true,
-    //     };
-    //   } else if (option.label === "Create Account") {
-    //     botResponse = {
-    //       role: "assistant",
-    //       id: (Date.now() + 1).toString(),
-    //       content: "To create an account, please provide your email address.",
-    //       sender: "bot",
-    //       timestamp: new Date(),
-    //     };
-    //   } else if (option.label === "Browse Features") {
-    //     botResponse = {
-    //       id: (Date.now() + 1).toString(),
-    //       role: "assistant",
-    //       content: "Here are some of our key features:",
-    //       sender: "bot",
-    //       timestamp: new Date(),
-    //       messageOptions: [
-    //         { label: "Yes", value: "yes" },
-    //         { label: "No, thanks", value: "no_thanks" },
-    //       ],
-    //       isInteractive: true,
-    //     };
-    //   } else if (
-    //     [
-    //       "Pricing",
-    //       "Features",
-    //       "Support",
-    //       "AI Chatbot",
-    //       "File Sharing",
-    //       "Analytics",
-    //     ].includes(option.label)
-    //   ) {
-    //     botResponse = {
-    //       id: (Date.now() + 1).toString(),
-    //       content: `You selected ${option}. Would you like to know more?`,
-    //       sender: "bot",
-    //       role: "assistant",
-    //       timestamp: new Date(),
-    //       messageOptions: [
-    //         { label: "Yes", value: "yes" },
-    //         { label: "No, thanks", value: "no_thanks" },
-    //       ],
-    //       isInteractive: true,
-    //     };
-    //   } else {
-    //     botResponse = {
-    //       id: (Date.now() + 1).toString(),
-    //       content:
-    //         "Thank you for your selection. Is there anything else I can help you with?",
-    //       sender: "bot",
-    //       role: "assistant",
-    //       timestamp: new Date(),
-    //       messageOptions: [
-    //         { label: "Yes", value: "yes" },
-    //         { label: "No, thanks", value: "no_thanks" },
-    //       ],
-    //       isInteractive: true,
-    //     };
-    //   }
-
-    //   setChatState((prevState) => ({
-    //     ...prevState,
-    //     messages: [...prevState.messages, botResponse],
-    //   }));
-    // }, 1000);
   };
 
   return (

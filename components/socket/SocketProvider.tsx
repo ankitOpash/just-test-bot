@@ -31,7 +31,7 @@ const SocketProvider: FC<SocketProviderProps> = ({ children }) => {
 
     const userid = localStorage.getItem("userid");
     const chatID = localStorage.getItem("chatID");
-   // console.log("User ID:", userid, "Chat ID:", chatID);
+    // console.log("User ID:", userid, "Chat ID:", chatID);
 
     newSocket.on("connect_error", (err) => {
       console.log("Connection Error:", err);
@@ -58,7 +58,7 @@ const SocketProvider: FC<SocketProviderProps> = ({ children }) => {
 
     // Check if the user is in a room
     try {
-     // console.log("userid", userid);
+      // console.log("userid", userid);
 
       if (!userid) {
         const message = await newSocket.emitWithAck("joinChat", {});
@@ -107,6 +107,5 @@ const SocketProvider: FC<SocketProviderProps> = ({ children }) => {
 };
 
 export default SocketProvider;
-
 
 /// when get user first msg that time coonet socket coonection

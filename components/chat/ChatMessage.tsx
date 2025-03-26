@@ -14,9 +14,6 @@ interface ChatMessageProps {
 export function ChatMessage({ message, handleOptionSelect }: ChatMessageProps) {
   const isUser = message.role === "user";
 
-  console.log(message, "message");
-  //console.log(message.attachments, "attachments"); // Add this line to log attachments
-
   return (
     <div
       className={cn(
@@ -54,15 +51,12 @@ export function ChatMessage({ message, handleOptionSelect }: ChatMessageProps) {
           )}
         >
           {message?.attachments && message?.attachments?.length > 0 && (
-            <div className="mt-2 space-y-2">
-              {message.attachments.map((attachment, index) => {
-
-                console.log(attachment, "attachment");
+            <div className="">
+              {message.attachments?.flat()?.map((attachment, index) => {
                 // Determine if the attachment is a string (direct URL) or an object
                 const isUrl = typeof attachment === "string";
                 const url = isUrl ? attachment : attachment?.url;
                 const name = isUrl ? "" : attachment?.name;
-                //console.log(attachment, "attachment");
 
                 return (
                   <div key={index} className="rounded overflow-hidden">
