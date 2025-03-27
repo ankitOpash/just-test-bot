@@ -1,5 +1,6 @@
 const path = require('path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = {
   mode: 'production',
@@ -18,7 +19,11 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['@babel/preset-env', '@babel/preset-typescript','@babel/preset-react'],
+            presets: [
+              '@babel/preset-env',
+              '@babel/preset-typescript',
+              '@babel/preset-react'
+            ],
           },
         },
       },
@@ -28,4 +33,9 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
     plugins: [new TsconfigPathsPlugin({ configFile: './tsconfig.json' })],
   },
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env': JSON.stringify(process.env) // This will inject environment variables
+    })
+  ]
 };
