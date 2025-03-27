@@ -1,5 +1,5 @@
 "use client";
-
+import React from 'react';
 import { Message } from "./types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn, getFileName } from "@/lib/utils";

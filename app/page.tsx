@@ -1,6 +1,6 @@
 "use client";
 import { Bot } from "lucide-react";
-
+import React from 'react';
 export default function Home() {
   return (
     <main className="container mx-auto p-4 min-h-screen">
