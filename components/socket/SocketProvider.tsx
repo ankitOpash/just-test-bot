@@ -1,5 +1,11 @@
 "use client";
-import React, { useEffect, useState, createContext, FC } from "react";
+import React, {
+  useEffect,
+  useState,
+  createContext,
+  FC,
+  useCallback,
+} from "react";
 import { Socket, io } from "socket.io-client";
 
 // Define the context type
@@ -18,20 +24,15 @@ export const SocketContext = createContext<SocketContextType>({
   socket: null,
   SocketConnection: () => {},
 });
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
 
 const SocketProvider: FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
 
-  const SocketConnection = async () => {
-    if (socket) return; // Prevent multiple connections
+  const SocketConnection = useCallback(async () => {
+    console.log("Socket is null, initiating connection...");
 
     const newSocket = io(baseURL);
-    //console.log("Socket:", newSocket);
-
-    const userid = localStorage.getItem("userid");
-    const chatID = localStorage.getItem("chatID");
-    // console.log("User ID:", userid, "Chat ID:", chatID);
 
     newSocket.on("connect_error", (err) => {
       console.log("Connection Error:", err);
@@ -58,8 +59,7 @@ const SocketProvider: FC<SocketProviderProps> = ({ children }) => {
 
     // Check if the user is in a room
     try {
-      // console.log("userid", userid);
-
+      const userid = localStorage.getItem("userid");
       if (!userid) {
         const message = await newSocket.emitWithAck("joinChat", {});
         if (message.cust_id && message.room) {
@@ -69,20 +69,19 @@ const SocketProvider: FC<SocketProviderProps> = ({ children }) => {
         await newSocket.emitWithAck("joinRoom", {
           cust_id: message.cust_id,
         });
-        //console.log("message", message);
       } else {
         const message = await newSocket.emitWithAck("joinRoom", {
           cust_id: userid,
         });
-        // console.log("joinRoom Response:", message);
-        // console.log("message", message);
       }
 
       setSocket(newSocket);
     } catch (error) {
       console.log("Error:", error);
     }
-  };
+
+    setSocket(newSocket);
+  }, []);
 
   const disconnectSocket = () => {
     if (socket) {

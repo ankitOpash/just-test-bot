@@ -39,7 +39,6 @@ export function ChatWidget() {
   useEffect(() => {
     // If the socket doesn't exist, initiate the connection
     if (!socket) {
-      SocketConnection();
       return;
     }
     const handleMessage = (message: any) => {
@@ -134,7 +133,6 @@ export function ChatWidget() {
 
     if (!socket) {
       console.log("Socket is null, initiating connection...");
-      SocketConnection();
       return;
     }
 
