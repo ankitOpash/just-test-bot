@@ -1,13 +1,13 @@
-const path = require('path');
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
-const webpack = require('webpack');
+import path from 'path';
+import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
+import webpack from 'webpack';
 
-module.exports = {
+export default {
   mode: 'production',
   entry: './public/cdn.ts',
   output: {
     filename: 'chat-widget.min.js',
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(process.cwd(), 'dist'),
     library: 'FastBots',
     libraryTarget: 'umd',
   },
@@ -35,7 +35,7 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env': JSON.stringify(process.env) // This will inject environment variables
+      'process.env': JSON.stringify(process.env)
     })
   ]
 };

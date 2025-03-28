@@ -1,9 +1,0 @@
-import { init, encodingForModel } from "tiktoken-node";
-import path from "path";
-
-// Adjust the path to match the root directory
-const wasmPath = path.join(process.cwd(), "tiktoken_bg.wasm");
-
-// Initialize tiktoken with the correct WASM file
-await init(wasmPath);
-const encoding = encodingForModel("gpt-4");

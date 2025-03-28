@@ -23,7 +23,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <SocketProvider>
           {children}
-          <ChatWidget />
+          {/* <ChatWidget /> */}
           <Toaster />
         </SocketProvider>
       </body>
